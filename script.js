@@ -29,176 +29,182 @@ class Apple {
   }
 }
 
-function onKeydown(event) {
-  switch (event.key) {
-    case 'd':
-    case 'ArrowRight':
-      // Go right
-      if (direction === 'left') return
-      direction = 'right'
-      break;
-    case 'q':
-    case 'a':
-    case 'ArrowLeft':
-      // Go left
-      if (direction === 'right') return
-      direction = 'left'
-      break;
-    case 's':
-    case 'ArrowDown':
-      // Go down
-      if (direction === 'up') return
-      direction = 'down'
-      break;
-    case 'z':
-    case 'w':
-    case 'ArrowUp':
-      // Go up
-      if (direction === 'down') return
-      direction = 'up'
-      break;
+function start() {
+  function drawSnake() {
+    ctx.fillStyle = snake.color
+    ctx.fillRect(snake.body[0][0], snake.body[0][1], snake.size, snake.size)
   }
-}
 
-function drawSnake() {
-  ctx.fillStyle = snake.color
-  ctx.fillRect(snake.body[0][0], snake.body[0][1], snake.size, snake.size)
-}
+  function spawnSnake() {
+    snake.spawn(width, height)
+    drawSnake()
+  }
 
-function spawnSnake() {
-  snake.spawn(width, height)
-  drawSnake()
-}
+  function spawnApple() {
+    // Spawn apple
+    apple.spawn(width, height)
 
-function spawnApple() {
-  // Spawn apple
-  apple.spawn(width, height)
+    // Get snake body coordinates
+    const snakeBody = snake.body.flat()
 
-  // Get snake body coordinates
-  const snakeBody = snake.body.flat()
+    // Prevent apple from spawning on snake body
+    for (let i = 0; i < snakeBody.length; i += 2) {
+      if (snakeBody[i] === apple.x && snakeBody[i + 1] === apple.y) {
+        spawnApple()
+      }
+    }
 
-  // Prevent apple from spawning on snake body
-  for (let i = 0; i < snakeBody.length; i += 2) {
-    if (snakeBody[i] === apple.x && snakeBody[i + 1] === apple.y) {
-      spawnApple()
+    // Draw apple on canvas
+    ctx.fillStyle = apple.color
+    ctx.fillRect(apple.x, apple.y, apple.size, apple.size)
+  }
+
+  function onKeydown(event) {
+    switch (event.key) {
+      case 'd':
+      case 'ArrowRight':
+        // Go right
+        if (direction === 'left') return
+        direction = 'right'
+        break;
+      case 'q':
+      case 'a':
+      case 'ArrowLeft':
+        // Go left
+        if (direction === 'right') return
+        direction = 'left'
+        break;
+      case 's':
+      case 'ArrowDown':
+        // Go down
+        if (direction === 'up') return
+        direction = 'down'
+        break;
+      case 'z':
+      case 'w':
+      case 'ArrowUp':
+        // Go up
+        if (direction === 'down') return
+        direction = 'up'
+        break;
     }
   }
 
-  // Draw apple on canvas
-  ctx.fillStyle = apple.color
-  ctx.fillRect(apple.x, apple.y, apple.size, apple.size)
-}
+  function loop(speed) {
+    // Game loop
+    setInterval(() => {
 
-function restart() {
-  // Clear score
-  score = 0
+      const previousHead = [...snake.body[0]]
 
-  // Clear canvas
-  ctx.clearRect(0, 0, width, height)
+      switch (direction) {
+        case 'right':
+          // Move head to right
+          snake.body.splice(0, 0, [previousHead[0] += snake.size, previousHead[1]])
+          break;
+        case 'left':
+          // Move head to left
+          snake.body.splice(0, 0, [previousHead[0] -= snake.size, previousHead[1]])
+          break;
+        case 'down':
+          // Move head to down
+          snake.body.splice(0, 0, [previousHead[0], previousHead[1] += snake.size])
+          break;
+        case 'up':
+          // Move head to up
+          snake.body.splice(0, 0, [previousHead[0], previousHead[1] -= snake.size])
+          break;
+      }
 
-  updateScore()
-  spawnSnake()
-  spawnApple()
-}
+      drawSnake()
 
-function updateScore() {
-  scoreLabel.innerText = `Score: ${score}`
-}
+      // Grab snake head to detect collision
+      const head = snake.body[0]
 
-// Grab canvas
-const canvas = document.getElementById('canvas')
+      // Detect wall collision
+      if (head[0] < 0 || head[0] >= width || head[1] < 0 || head[1] >= height) {
+        alert('Game over')
+        restart()
+        return
+      }
 
-// Grab score
-const scoreLabel = document.getElementById('score')
+      // Detect snake bite itself
+      if (snake.body.slice(1).some(position => {
+        return position[0] === head[0] && position[1] === head[1]
+      })) {
+        alert('You just killed yourself')
+        restart()
+        return
+      }
 
-// Get context
-const ctx = canvas.getContext('2d')
+      // Detect eaten apple
+      if (head[0] === apple.x && head[1] === apple.y) {
+        score += 1
+        updateScore()
+        spawnApple()
+        return
+      }
 
-// Initialize canvas size
-const width = 1080
-const height = 500
+      // Remove previous tail
+      const previousTail = snake.body.pop()
+      ctx.clearRect(previousTail[0], previousTail[1], snake.size, snake.size)
 
-// Create snake object
-const snake = new Snake()
-
-// Create apple object
-const apple = new Apple()
-
-// Initialize direction
-let direction = 'right'
-
-// Initialize game speed (in ms)
-let speed = 50
-
-// Initialize score
-let score = 0
-
-// Detect user press on key
-document.addEventListener('keydown', onKeydown);
-
-// Set canvas size
-canvas.width = width
-canvas.height = height
-
-// Draw items on canvas
-spawnApple()
-spawnSnake()
-
-// Game loop
-setInterval(() => {
-
-  const previousHead = [...snake.body[0]]
-
-  switch (direction) {
-    case 'right':
-      // Move head to right
-      snake.body.splice(0, 0, [previousHead[0] += snake.size, previousHead[1]])
-      break;
-    case 'left':
-      // Move head to left
-      snake.body.splice(0, 0, [previousHead[0] -= snake.size, previousHead[1]])
-      break;
-    case 'down':
-      // Move head to down
-      snake.body.splice(0, 0, [previousHead[0], previousHead[1] += snake.size])
-      break;
-    case 'up':
-      // Move head to up
-      snake.body.splice(0, 0, [previousHead[0], previousHead[1] -= snake.size])
-      break;
+    }, speed)
   }
 
-  drawSnake()
-
-  // Grab snake head to detect collision
-  const head = snake.body[0]
-
-  // Detect wall collision
-  if (head[0] < 0 || head[0] >= width || head[1] < 0 || head[1] >= height) {
-    alert('Game over')
-    restart()
-    return
+  function updateScore() {
+    scoreLabel.innerText = `Score: ${score}`
   }
 
-  // Detect snake bite itself
-  if (snake.body.slice(1).some(position => {
-    return position[0] === head[0] && position[1] === head[1]
-  })) {
-    alert('You just killed yourself')
-    restart()
-    return
-  }
+  function restart() {
+    // Clear score
+    score = 0
 
-  // Detect eaten apple
-  if (head[0] === apple.x && head[1] === apple.y) {
-    score += 1
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height)
+
     updateScore()
+    spawnSnake()
     spawnApple()
-    return
   }
 
-  // Remove previous tail
-  const previousTail = snake.body.pop()
-  ctx.clearRect(previousTail[0], previousTail[1], snake.size, snake.size)
+  // Grab canvas
+  const canvas = document.getElementById('canvas')
 
-}, speed)
+  // Grab score
+  const scoreLabel = document.getElementById('score')
+
+  // Get context
+  const ctx = canvas.getContext('2d')
+
+  // Initialize canvas size
+  const width = 1080
+  const height = 500
+
+  // Create snake object
+  const snake = new Snake()
+
+  // Create apple object
+  const apple = new Apple()
+
+  // Initialize direction
+  let direction = 'right'
+
+  // Initialize game speed (in ms)
+  let speed = 50
+
+  // Initialize score
+  let score = 0
+
+  // Detect user press on key
+  document.addEventListener('keydown', onKeydown);
+
+  // Set canvas size
+  canvas.width = width
+  canvas.height = height
+
+  // Draw items on canvas
+  spawnApple()
+  spawnSnake()
+
+  loop(speed)
+}
