@@ -1,6 +1,6 @@
 class Snake {
   constructor() {
-    this.size = 10
+    this.size = 20
     this.color = 'red'
     this.body = []
   }
@@ -16,7 +16,7 @@ class Apple {
   constructor() {
     this.position
     this.color = 'green'
-    this.size = 10
+    this.size = 20
     this.x
     this.y
   }
@@ -177,8 +177,8 @@ function start() {
   const ctx = canvas.getContext('2d')
 
   // Initialize canvas size
-  const width = 1080
-  const height = 500
+  const width = 800
+  const height = 400
 
   // Create snake object
   const snake = new Snake()
